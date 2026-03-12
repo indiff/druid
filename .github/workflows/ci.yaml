@@ -52,4 +52,5 @@ jobs:
             compression-level: 9 # 压缩级别
             path: |
               ./druid-spring-boot-starter/target/*.jar
-              ./druid/target/*.jar
+              ./druid/core/target/*.jar
+# /home/runner/work/druid/druid/core/target/druid-1.2.29-SNAPSHOT.jar
