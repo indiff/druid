@@ -33,7 +33,8 @@ jobs:
           cache: 'maven'
       - name: Build with Maven if test jdk8
         if: ${{ matrix.java == '8' || matrix.java == '11'}}
-        run: ./mvnw -Pgen-javadoc clean package -B
+        #run: ./mvnw -Pgen-javadoc clean package -B
+        run: ./mvnw clean package -B
       - name: Build with Maven if test jdk17
         if: ${{ matrix.java == '17' || matrix.java == '21' }}
         run: ./mvnw -Penable-for-jdk17+,gen-code-cov clean package -B
@@ -42,3 +43,12 @@ jobs:
         uses: codecov/codecov-action@v3.1.0
         with:
           files: ./core/target/site/jacoco/jacoco.xml,./druid-spring-boot-starter/target/site/jacoco/jacoco.xml,./druid-spring-boot-3-starter/target/site/jacoco/jacoco.xml
+      - name: Archive artifacts for jar
+        if: ${{ matrix.java == '8' }}
+        uses: actions/upload-artifact@v4
+        with:
+            name: druid
+            retention-days: 7 # 保留期 
+            compression-level: 9 # 压缩级别
+            path: |
+              ./target/*.jar
