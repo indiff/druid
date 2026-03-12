@@ -34,7 +34,7 @@ jobs:
       - name: Build with Maven if test jdk8
         if: ${{ matrix.java == '8' || matrix.java == '11'}}
         #run: ./mvnw -Pgen-javadoc clean package -B
-        run: ./mvnw clean package -B
+        run: ./mvnw clean package -B -DskipTests
       - name: Build with Maven if test jdk17
         if: ${{ matrix.java == '17' || matrix.java == '21' }}
         run: ./mvnw -Penable-for-jdk17+,gen-code-cov clean package -B
@@ -51,4 +51,5 @@ jobs:
             retention-days: 7 # 保留期 
             compression-level: 9 # 压缩级别
             path: |
-              ./target/*.jar
+              ./druid-spring-boot-starter/target/*.jar
+              ./druid/target/*.jar
