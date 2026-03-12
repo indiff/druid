@@ -37,7 +37,7 @@ jobs:
         run: ./mvnw clean package -B -DskipTests
       - name: Build with Maven if test jdk17
         if: ${{ matrix.java == '17' || matrix.java == '21' }}
-        run: ./mvnw -Penable-for-jdk17+,gen-code-cov clean package -B
+        run: ./mvnw -Penable-for-jdk17+,gen-code-cov clean package -B -DskipTests
       - name: "Codecov if test jdk17"
         if: ${{ matrix.java == '17' }}
         uses: codecov/codecov-action@v3.1.0
@@ -52,5 +52,5 @@ jobs:
             compression-level: 9 # 压缩级别
             path: |
               ./druid-spring-boot-starter/target/*.jar
-              ./druid/core/target/*.jar
+              ./core/target/*.jar
 # /home/runner/work/druid/druid/core/target/druid-1.2.29-SNAPSHOT.jar
