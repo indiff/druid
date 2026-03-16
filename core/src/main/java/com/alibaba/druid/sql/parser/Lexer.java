@@ -106,9 +106,7 @@ public class Lexer {
         this.commentHandler = commentHandler;
         this.dbType = dbType;
 
-        if (DbType.sqlite == dbType) {
-            this.keywords = Keywords.SQLITE_KEYWORDS;
-        } else if (DbType.dm == dbType) {
+        if (DbType.dm == dbType) {
             this.keywords = Keywords.DM_KEYWORDS;
         }
     }
@@ -466,8 +464,9 @@ public class Lexer {
             } else if (ch == '>') {
                 scanChar();
                 token = EQGT;
+            } else {
+                token = EQ;
             }
-            token = EQ;
             return;
         }
 
@@ -1428,7 +1427,7 @@ public class Lexer {
                     token = Token.SEMI;
                     return;
                 case '`':
-                    throw new ParserException("TODO. " + info()); // TODO
+                    throw new ParserException("backtick quote is not supported for current dialect. " + info());
                 case '@':
                     scanVariable_at();
                     return;
@@ -1741,7 +1740,7 @@ public class Lexer {
                 }
                 break;
             default:
-                throw new ParserException("TODO. " + info());
+                throw new ParserException("unexpected character '" + ch + "'. " + info());
         }
     }
 
@@ -2072,6 +2071,10 @@ public class Lexer {
                     char c2 = charAt(++pos);
                     char c3 = charAt(++pos);
                     char c4 = charAt(++pos);
+                    if (!CharTypes.isHex(c1) || !CharTypes.isHex(c2) || !CharTypes.isHex(c3) || !CharTypes.isHex(c4)) {
+                        throw new ParserException("invalid unicode escape sequence '\\u"
+                                + c1 + c2 + c3 + c4 + "', expected 4 hex digits. " + info());
+                    }
                     int intVal = Integer.parseInt(new String(new char[]{c1, c2, c3, c4}), 16);
                     putChar((char) intVal);
                     return;
@@ -2184,14 +2187,20 @@ public class Lexer {
                         break;
                     case 'u':
                         if (dialectFeatureEnabled(ScanAliasU)) {
-                            char c1 = charAt(++pos);
-                            char c2 = charAt(++pos);
-                            char c3 = charAt(++pos);
-                            char c4 = charAt(++pos);
-
-                            int intVal = Integer.parseInt(new String(new char[]{c1, c2, c3, c4}), 16);
-
-                            putChar((char) intVal);
+                            if (pos + 4 < text.length()) {
+                                char c1 = charAt(++pos);
+                                char c2 = charAt(++pos);
+                                char c3 = charAt(++pos);
+                                char c4 = charAt(++pos);
+                                if (!CharTypes.isHex(c1) || !CharTypes.isHex(c2) || !CharTypes.isHex(c3) || !CharTypes.isHex(c4)) {
+                                    throw new ParserException("invalid unicode escape sequence '\\u"
+                                            + c1 + c2 + c3 + c4 + "', expected 4 hex digits. " + info());
+                                }
+                                int intVal = Integer.parseInt(new String(new char[]{c1, c2, c3, c4}), 16);
+                                putChar((char) intVal);
+                            } else {
+                                throw new ParserException("unclosed unicode escape sequence. " + info());
+                            }
                         } else {
                             putChar(ch);
                         }
@@ -3328,9 +3337,16 @@ public class Lexer {
                 || comment.indexOf("update") != -1 //
                 || comment.indexOf("into") != -1 //
                 || comment.indexOf("where") != -1 //
-                || comment.indexOf("or") != -1 //
-                || comment.indexOf("and") != -1 //
+                || containsWord(comment, "or") //
+                || containsWord(comment, "and") //
                 || comment.indexOf("union") != -1 //
+                || comment.indexOf("drop") != -1 //
+                || comment.indexOf("alter") != -1 //
+                || comment.indexOf("create") != -1 //
+                || comment.indexOf("truncate") != -1 //
+                || comment.indexOf("exec") != -1 //
+                || comment.indexOf("grant") != -1 //
+                || comment.indexOf("revoke") != -1 //
                 || comment.indexOf('\'') != -1 //
                 || comment.indexOf('=') != -1 //
                 || comment.indexOf('>') != -1 //
@@ -3338,10 +3354,25 @@ public class Lexer {
                 || comment.indexOf('&') != -1 //
                 || comment.indexOf('|') != -1 //
                 || comment.indexOf('^') != -1 //
+                || comment.indexOf(';') != -1 //
         ) {
             return false;
         }
         return true;
+    }
+
+    private static boolean containsWord(String text, String word) {
+        int index = 0;
+        while ((index = text.indexOf(word, index)) != -1) {
+            boolean startBound = (index == 0 || !Character.isLetterOrDigit(text.charAt(index - 1)));
+            boolean endBound = (index + word.length() >= text.length()
+                    || !Character.isLetterOrDigit(text.charAt(index + word.length())));
+            if (startBound && endBound) {
+                return true;
+            }
+            index += word.length();
+        }
+        return false;
     }
 
     protected void addComment(String comment) {
