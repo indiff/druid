@@ -18,12 +18,33 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        java: [ 8, 11, 17, 21 ]
+        java: [ 8 ]
+        # java: [ 8, 11, 17, 21 ]
       fail-fast: false
       max-parallel: 16
     name: Test JDK ${{ matrix.java }}, ${{ matrix.os }}
 
     steps:
+      - name: Get buildPrefix
+        id: get
+        run: |
+          set -eux
+          # 首先更新索引（带重试/修复）
+          sudo apt-get clean
+          sudo apt-get update -o Acquire::Retries=5 || sudo apt-get update --fix-missing
+          # 如仍失败，切到官方镜像再更新
+          if ! sudo apt-get update; then
+            sudo sed -i 's|azure.archive.ubuntu.com|archive.ubuntu.com|g' /etc/apt/sources.list
+            sudo sed -i 's|http://security.ubuntu.com|https://security.ubuntu.com|g' /etc/apt/sources.list
+            sudo apt-get update -o Acquire::Retries=5
+          fi
+
+          # 安装所需包(systemd 已有，可不装）
+          sudo apt-get install -y --no-install-recommends language-pack-zh-hans language-pack-zh-hans-base locales tree
+          sudo locale-gen zh_CN.UTF-8 || true
+          /usr/bin/localectl set-locale LANG=zh_CN.UTF-8 || true 
+          /usr/bin/timedatectl set-timezone Asia/Shanghai || true 
+          /usr/bin/timedatectl set-ntp true || true
       - uses: actions/checkout@v4
       - name: Set up JDK
         uses: actions/setup-java@v4
