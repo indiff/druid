@@ -42,9 +42,9 @@ jobs:
           # 安装所需包(systemd 已有，可不装）
           sudo apt-get install -y --no-install-recommends language-pack-zh-hans language-pack-zh-hans-base locales tree
           sudo locale-gen zh_CN.UTF-8 || true
-          /usr/bin/localectl set-locale LANG=zh_CN.UTF-8 || true 
-          /usr/bin/timedatectl set-timezone Asia/Shanghai || true 
-          /usr/bin/timedatectl set-ntp true || true
+          sudo /usr/bin/localectl set-locale LANG=zh_CN.UTF-8 || true 
+          sudo /usr/bin/timedatectl set-timezone Asia/Shanghai || true 
+          sudo /usr/bin/timedatectl set-ntp true || true
       - uses: actions/checkout@v4
       - name: Set up JDK
         uses: actions/setup-java@v4
