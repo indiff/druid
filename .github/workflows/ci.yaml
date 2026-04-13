@@ -58,6 +58,8 @@ jobs:
           sudo /usr/bin/timedatectl set-timezone Asia/Shanghai || true 
           sudo /usr/bin/timedatectl set-ntp true || true
           date
+          export TZ=Asia/Shanghai
+          export MAVEN_OPTS="-Duser.timezone=Asia/Shanghai"
           ./mvnw clean package -B -DskipTests
       - name: Build with Maven if test jdk17
         if: ${{ matrix.java == '17' || matrix.java == '21' }}
