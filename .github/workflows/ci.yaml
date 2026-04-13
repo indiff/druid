@@ -25,7 +25,7 @@ jobs:
     name: Test JDK ${{ matrix.java }}, ${{ matrix.os }}
 
     steps:
-      - name: Get buildPrefix
+      - name: Pre install
         id: get
         run: |
           set -eux
@@ -41,10 +41,7 @@ jobs:
 
           # 安装所需包(systemd 已有，可不装）
           sudo apt-get install -y --no-install-recommends language-pack-zh-hans language-pack-zh-hans-base locales tree
-          sudo locale-gen zh_CN.UTF-8 || true
-          sudo /usr/bin/localectl set-locale LANG=zh_CN.UTF-8 || true 
-          sudo /usr/bin/timedatectl set-timezone Asia/Shanghai || true 
-          sudo /usr/bin/timedatectl set-ntp true || true
+          
       - uses: actions/checkout@v4
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -55,7 +52,13 @@ jobs:
       - name: Build with Maven if test jdk8
         if: ${{ matrix.java == '8' || matrix.java == '11'}}
         #run: ./mvnw -Pgen-javadoc clean package -B
-        run: ./mvnw clean package -B -DskipTests
+        run: |
+          sudo locale-gen zh_CN.UTF-8 || true
+          sudo /usr/bin/localectl set-locale LANG=zh_CN.UTF-8 || true 
+          sudo /usr/bin/timedatectl set-timezone Asia/Shanghai || true 
+          sudo /usr/bin/timedatectl set-ntp true || true
+          date
+          ./mvnw clean package -B -DskipTests
       - name: Build with Maven if test jdk17
         if: ${{ matrix.java == '17' || matrix.java == '21' }}
         run: ./mvnw -Penable-for-jdk17+,gen-code-cov clean package -B -DskipTests
